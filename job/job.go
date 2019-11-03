@@ -6,43 +6,42 @@ import (
 )
 
 type AsyncJob struct {
-	done bool
-	lk   *sync.Mutex
-	val  interface{}
+	running bool
+	lk      *sync.Mutex
+	f       func(...interface{}) interface{}
+	val     interface{}
 }
 
-func Function(f func(...interface{}) interface{}) *AsyncJob {
+func New(f func(...interface{}) interface{}) *AsyncJob {
 	return &AsyncJob{
-		done: false,
-		lk:   &sync.Mutex{},
-		val:  f,
+		running: false,
+		lk:      &sync.Mutex{},
+		f:       f,
+		val:     nil,
 	}
 }
 
-func Consumer(f func(...interface{})) *AsyncJob {
-	return Function(func(i ...interface{}) interface{} {
+func NewConsumer(f func(...interface{})) *AsyncJob {
+	return New(func(i ...interface{}) interface{} {
 		f(i...)
 		return nil
 	})
 }
 
-func Clojure(f func() interface{}) *AsyncJob {
-	return Function(func(i ...interface{}) interface{} {
+func NewClojure(f func() interface{}) *AsyncJob {
+	return New(func(i ...interface{}) interface{} {
 		return f()
 	})
 }
 
 func (j *AsyncJob) Start(args ...interface{}) *AsyncJob {
 	j.lk.Lock()
-	if !j.done {
-		go func() {
-			j.val = j.val.(func(...interface{}) interface{})(args...)
-			j.done = true
-			j.lk.Unlock()
-		}()
-	} else {
+	j.running = true
+	go func() {
+		j.val = j.f(args...)
+		j.running = false
 		j.lk.Unlock()
-	}
+	}()
 	return j
 }
 
@@ -52,10 +51,11 @@ func (j *AsyncJob) Await() interface{} {
 	return j.val
 }
 
-func (j *AsyncJob) Done() bool {
-	return j.done
-}
-
 func (j *AsyncJob) String() string {
-	return fmt.Sprintf("AsyncJob { done = %v, result = %v }", j.done, j.val)
+	j.lk.Lock()
+	defer j.lk.Unlock()
+	if j.running {
+		return "AsyncJob { running }"
+	}
+	return fmt.Sprintf("AsyncJob { result = %v (%T) }", j.val, j.val)
 }
