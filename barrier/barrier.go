@@ -21,15 +21,17 @@ func New(n uint) *Barrier {
 }
 
 func (s *Barrier) Wait() {
-    s.l.Lock()
-    if s.n > 0  {
+    for {
+        s.l.Lock()
+        if s.n == 0 {
+            break
+        }
         l := &sync.Mutex{}
         l.Lock()
         s.wsLks.Append(l)
         s.l.Unlock()
         l.Lock()
         l.Unlock()
-        s.l.Lock()
     }
     s.l.Unlock()
 }

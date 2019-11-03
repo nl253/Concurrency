@@ -23,18 +23,19 @@ func New(n uint) *Sema {
 }
 
 func (s *Sema) Acquire() {
-	s.l.Lock()
-	if s.n == 1 {
-		l := &sync.Mutex{}
-		l.Lock()
-		s.wsLks.Append(l)
-		s.l.Unlock()
-		l.Lock()
-		l.Unlock()
-		s.l.Lock()
-	}
-	s.n--
-	s.l.Unlock()
+    for {
+        s.l.Lock()
+        if s.n > 1 {
+            s.n--
+            break
+        }
+        l := &sync.Mutex{}
+        l.Lock()
+        s.wsLks.Append(l)
+        s.l.Unlock()
+        l.Lock()
+    }
+    s.l.Unlock()
 }
 
 func (s *Sema) AcquireN(n uint) {
