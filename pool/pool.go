@@ -10,17 +10,14 @@ type Pool struct {
 	f    func(...interface{}) interface{}
 }
 
-func New(n uint, f func(...interface{}) interface{}) *Pool {
-	return &Pool{
-		sema: sema.New(n),
-		f:    f,
-	}
+func New(n uint) *Pool {
+	return &Pool{sema: sema.New(n)}
 }
 
-func (p *Pool) Submit(args ...interface{}) *job.Running {
+func (p *Pool) Submit(j *job.AsyncJob) *job.Running {
 	p.sema.Acquire()
 	return job.NewClojure(func() interface{} {
-		result := p.f(args...)
+		result := j.Start().Await()
 		p.sema.Release()
 		return result
 	}).Start()

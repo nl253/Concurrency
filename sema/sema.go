@@ -1,9 +1,9 @@
 package sema
 
 import (
-    "sync"
+	"sync"
 
-    "github.com/nl253/DataStructures/list"
+	"github.com/nl253/DataStructures/list"
 )
 
 type Sema struct {
@@ -14,7 +14,7 @@ type Sema struct {
 }
 
 func New(n uint) *Sema {
-   return &Sema{
+	return &Sema{
 		n:     n,
 		max:   n,
 		l:     &sync.Mutex{},
@@ -23,19 +23,19 @@ func New(n uint) *Sema {
 }
 
 func (s *Sema) Acquire() {
-    for {
-        s.l.Lock()
-        if s.n > 1 {
-            s.n--
-            break
-        }
-        l := &sync.Mutex{}
-        l.Lock()
-        s.wsLks.Append(l)
-        s.l.Unlock()
-        l.Lock()
-    }
-    s.l.Unlock()
+	for {
+		s.l.Lock()
+		if s.n > 1 {
+			s.n--
+			break
+		}
+		l := &sync.Mutex{}
+		l.Lock()
+		s.wsLks.Append(l)
+		s.l.Unlock()
+		l.Lock()
+	}
+	s.l.Unlock()
 }
 
 func (s *Sema) AcquireN(n uint) {

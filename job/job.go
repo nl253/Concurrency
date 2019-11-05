@@ -1,8 +1,8 @@
 package job
 
 import (
-    "fmt"
-    "sync"
+	"fmt"
+	"sync"
 )
 
 type AsyncJob struct {
