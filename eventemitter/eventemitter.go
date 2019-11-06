@@ -47,6 +47,20 @@ func (e *EventEmitter) Off(eventName string) *EventEmitter {
 	return e
 }
 
+func (e *EventEmitter) Clone() *EventEmitter {
+	newM := make(map[string][]func(...interface{}), len(e.fs))
+	for k, v := range e.fs {
+		newM[k] = make([]func(...interface{}), len(v))
+		for idx, el := range v {
+			newM[k][idx] = el
+		}
+	}
+	return &EventEmitter{
+		lk: &sync.Mutex{},
+		fs: newM,
+	}
+}
+
 func (e *EventEmitter) Eq(x interface{}) bool {
 	switch x.(type) {
 	case *EventEmitter:
