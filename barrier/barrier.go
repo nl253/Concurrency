@@ -22,8 +22,9 @@ func New(n uint) *Barrier {
 }
 
 func NewFromJobs(js ...*job.AsyncJob) *Barrier {
-	b := New(uint(len(js)))
-	for i := uint(0); i < b.n; i++ {
+	end := uint(len(js))
+	b := New(end)
+	for i := uint(0); i < end; i++ {
 		b.Submit(js[i])
 	}
 	return b
@@ -47,14 +48,12 @@ func (s *Barrier) Wait() {
 
 func (s *Barrier) Submit(j *job.AsyncJob) *job.Running {
 	s.l.Lock()
+	defer s.l.Unlock()
 	s.n++
-	c := job.NewClojure(func() interface{} {
-		result := j.Start().Await()
-		s.done()
-		return result
+	return job.NewClojure(func() interface{} {
+		defer s.done()
+		return j.Start().Await()
 	}).Start()
-	s.l.Unlock()
-	return c
 }
 
 func (s *Barrier) done() {
