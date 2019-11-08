@@ -67,3 +67,12 @@ func (s *Sema) ReleaseN(n uint) {
 func (s *Sema) ReleaseAll() {
 	s.ReleaseN(s.max)
 }
+
+func (s *Sema) Clone() *Sema {
+	return &Sema{
+		n:     s.n,
+		max:   s.max,
+		l:     &sync.Mutex{},
+		wsLks: list.New(),
+	}
+}

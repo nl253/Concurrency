@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"fmt"
+
 	"github.com/nl253/Concurrency/job"
 	"github.com/nl253/Concurrency/sema"
 )
@@ -23,6 +25,13 @@ func (p *Pool) Submit(j *job.AsyncJob) *job.Running {
 	}).Start()
 }
 
+func (p *Pool) Clone() *Pool {
+	return &Pool{
+		sema: p.sema.Clone(),
+		f:    p.f,
+	}
+}
+
 func (p *Pool) String() string {
-	return "Pool"
+	return fmt.Sprint("Pool { sema = %u }", p.sema.NPermits())
 }

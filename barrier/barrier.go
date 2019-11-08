@@ -1,6 +1,7 @@
 package barrier
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/nl253/Concurrency/job"
@@ -66,4 +67,16 @@ func (s *Barrier) done() {
 		}
 	}
 	s.l.Unlock()
+}
+
+func (s *Barrier) Clone() *Barrier {
+	return &Barrier{
+		n:     s.n,
+		l:     &sync.Mutex{},
+		wsLks: list.New(),
+	}
+}
+
+func (s *Barrier) String() string {
+	return fmt.Sprint("Barrier { n = %u }", s.n)
 }
