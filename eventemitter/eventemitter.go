@@ -29,8 +29,7 @@ func (e *EventEmitter) Emit(eventName string, args ...interface{}) *EventEmitter
 func (e *EventEmitter) On(eventName string, fs ...func(...interface{})) *EventEmitter {
 	e.lk.Lock()
 	defer e.lk.Unlock()
-	listeners, ok := e.fs[eventName]
-	if ok {
+	if listeners, ok := e.fs[eventName]; ok {
 		e.fs[eventName] = append(listeners, fs...)
 	} else {
 		e.fs[eventName] = fs
@@ -38,7 +37,22 @@ func (e *EventEmitter) On(eventName string, fs ...func(...interface{})) *EventEm
 	return e
 }
 
-func (e *EventEmitter) Off(eventName string) *EventEmitter {
+func (e *EventEmitter) Off(eventName string, n uint) *EventEmitter {
+	e.lk.Lock()
+	defer e.lk.Unlock()
+	newFs := make([]func(...interface{}), 0)
+	end := uint(len(e.fs))
+	events := e.fs[eventName]
+	for i := uint(0); i < end; i++ {
+		if i != n {
+			newFs = append(newFs, events[i])
+		}
+	}
+	e.fs[eventName] = newFs
+	return e
+}
+
+func (e *EventEmitter) OffAll(eventName string) *EventEmitter {
 	e.lk.Lock()
 	defer e.lk.Unlock()
 	if _, ok := e.fs[eventName]; ok {
