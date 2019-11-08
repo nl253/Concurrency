@@ -20,6 +20,7 @@ func (w *Worker) Start() (*stream.Stream, *stream.Stream) {
 	}()
 	return in, out
 }
+
 func (w *Worker) String() string {
 	return "Worker"
 }
