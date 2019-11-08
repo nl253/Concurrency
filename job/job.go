@@ -54,6 +54,10 @@ func (j *AsyncJob) Start(args ...interface{}) *Running {
 	return p
 }
 
+func (j *AsyncJob) Clone () *AsyncJob {
+    return New(j.f)
+}
+
 func (j *AsyncJob) String() string {
 	return "AsyncJob"
 }
