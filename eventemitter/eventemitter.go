@@ -8,11 +8,11 @@ import (
 
 type EventEmitter struct {
 	lk *sync.Mutex
-	fs map[string][]func(...interface{})
+	fs map[string][]*func(...interface{})
 }
 
 func New() *EventEmitter {
-	return &EventEmitter{fs: map[string][]func(...interface{}){}, lk: &sync.Mutex{}}
+	return &EventEmitter{fs: map[string][]*func(...interface{}){}, lk: &sync.Mutex{}}
 }
 
 func (e *EventEmitter) Emit(eventName string, args ...interface{}) *EventEmitter {
@@ -20,13 +20,13 @@ func (e *EventEmitter) Emit(eventName string, args ...interface{}) *EventEmitter
 	defer e.lk.Unlock()
 	if listeners, ok := e.fs[eventName]; ok {
 		for _, l := range listeners {
-			l(args...)
+			(*l)(args...)
 		}
 	}
 	return e
 }
 
-func (e *EventEmitter) On(eventName string, fs ...func(...interface{})) *EventEmitter {
+func (e *EventEmitter) On(eventName string, fs ...*func(...interface{})) *EventEmitter {
 	e.lk.Lock()
 	defer e.lk.Unlock()
 	if listeners, ok := e.fs[eventName]; ok {
@@ -37,14 +37,14 @@ func (e *EventEmitter) On(eventName string, fs ...func(...interface{})) *EventEm
 	return e
 }
 
-func (e *EventEmitter) Off(eventName string, n uint) *EventEmitter {
+func (e *EventEmitter) Off(eventName string, f *func(...interface{})) *EventEmitter {
 	e.lk.Lock()
 	defer e.lk.Unlock()
-	newFs := make([]func(...interface{}), 0)
+	newFs := make([]*func(...interface{}), 0)
 	end := uint(len(e.fs))
 	events := e.fs[eventName]
 	for i := uint(0); i < end; i++ {
-		if i != n {
+		if events[i] != f {
 			newFs = append(newFs, events[i])
 		}
 	}
@@ -56,7 +56,7 @@ func (e *EventEmitter) OffAll(eventName string) *EventEmitter {
 	e.lk.Lock()
 	defer e.lk.Unlock()
 	if _, ok := e.fs[eventName]; ok {
-		e.fs[eventName] = []func(...interface{}){}
+		e.fs[eventName] = []*func(...interface{}){}
 	}
 	return e
 }
@@ -71,17 +71,17 @@ func (e *EventEmitter) Eq(x interface{}) bool {
 }
 
 func (e *EventEmitter) Clone() *EventEmitter {
-    newM := make(map[string][]func(...interface{}), len(e.fs))
-    for k, v := range e.fs {
-        newM[k] = make([]func(...interface{}), len(v))
-        for idx, el := range v {
-            newM[k][idx] = el
-        }
-    }
-    return &EventEmitter{
-        lk: &sync.Mutex{},
-        fs: newM,
-    }
+	newM := make(map[string][]*func(...interface{}), len(e.fs))
+	for k, v := range e.fs {
+		newM[k] = make([]*func(...interface{}), len(v))
+		for idx, el := range v {
+			newM[k][idx] = el
+		}
+	}
+	return &EventEmitter{
+		lk: &sync.Mutex{},
+		fs: newM,
+	}
 }
 
 func (e *EventEmitter) String() string {
